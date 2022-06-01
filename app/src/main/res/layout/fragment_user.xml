@@ -16,6 +16,7 @@
             android:layout_height="wrap_content"
             android:id="@+id/tv_username_id"
             android:layout_marginTop="16dp"
+            android:freezesText="true"
             android:layout_marginStart="42dp"
             android:text="@string/greeting" />
 
@@ -23,6 +24,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:id="@+id/tv_role"
+            android:freezesText="true"
             android:layout_marginTop="64dp"
             android:layout_marginStart="42dp"
             android:text="@string/your_role" />
@@ -31,6 +33,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:id="@+id/tv_email"
+            android:freezesText="true"
             android:layout_marginTop="112dp"
             android:layout_marginStart="42dp"
             android:text="@string/your_email" />

@@ -66,7 +66,6 @@ public class LoginFragment extends Fragment {
             Toast.makeText(getContext(), "Добро пожаловать " + username + "!", Toast.LENGTH_SHORT).show();
             loginUser(username, password);
             navController.navigate(R.id.action_loginFragment_to_userFragment, null, navOptions);
-
         }
 
         EditText edLogin = view.findViewById(R.id.ed_login);
@@ -111,13 +110,6 @@ public class LoginFragment extends Fragment {
                 bundle.putString("token", loginResponse.accessToken);
 
                 navController.navigate(R.id.action_loginFragment_to_userFragment, bundle, navOptions);
-            }
-        });
-        loginViewModel.getCode().observe(getViewLifecycleOwner(), code -> {
-            if (code == 401) {
-                Toast.makeText(getContext(), "Неверный Логин или Пароль", Toast.LENGTH_LONG).show();
-            } else {
-                Toast.makeText(getContext(), "Неопознаная ошибка " + code.toString(), Toast.LENGTH_LONG).show();
             }
         });
         loginViewModel.getError().observe(getViewLifecycleOwner(), error -> Toast.makeText(getContext(), error, Toast.LENGTH_LONG).show());

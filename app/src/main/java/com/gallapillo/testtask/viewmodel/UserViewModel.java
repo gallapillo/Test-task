@@ -15,28 +15,23 @@ import com.gallapillo.testtask.di.RetroInstance;
 
 import org.jetbrains.annotations.NotNull;
 
-import retrofit2.Call;
-import retrofit2.Callback;
-import retrofit2.Response;
+import io.reactivex.Observer;
+import io.reactivex.disposables.Disposable;
+import io.reactivex.schedulers.Schedulers;
+
 
 public class UserViewModel extends ViewModel {
 
     private final MutableLiveData<User> userMutableLiveData;
-    private final MutableLiveData<Integer> code;
     private final MutableLiveData<String> error;
 
     public UserViewModel() {
         userMutableLiveData = new MutableLiveData<>();
-        code = new MutableLiveData<>();
         error = new MutableLiveData<>();
     }
 
-    public MutableLiveData<User> getUserMutableLiveData() {
+    public MutableLiveData<User> getUserMutableLiveDataObserver() {
         return userMutableLiveData;
-    }
-
-    public MutableLiveData<Integer> getCode() {
-        return code;
     }
 
     public MutableLiveData<String> getError() {
@@ -45,30 +40,34 @@ public class UserViewModel extends ViewModel {
 
     public void getUserInfo(String authorization, Context context) {
         UserApi userApi = RetroInstance.getRetrofitInstance().create(UserApi.class);
-        Call<User> call = userApi.getUserInfo(authorization);
 
-        call.enqueue(new Callback<User>() {
-            @Override
-            public void onResponse(@NotNull Call<User> call, @NotNull Response<User> response) {
-                if (InternetConnection.isInternetConnected(context)) {
-                    if (response.isSuccessful()) {
-                        userMutableLiveData.postValue(response.body());
-                    } else {
-                        code.postValue(response.code());
-                        assert response.errorBody() != null;
-                        error.postValue(response.errorBody().toString());
-                    }
-                } else {
-                    error.postValue("Нет соеденения с сервером, проверьте подключение к сети!");
-                }
-            }
+        if (InternetConnection.isInternetConnected(context)) {
+            userApi.getUserInfo(authorization).toObservable()
+                    .subscribeOn(Schedulers.io())
+                    .subscribe(new Observer<User>() {
+                        @Override
+                        public void onSubscribe(@NotNull Disposable d) {
 
-            @Override
-            public void onFailure(@NotNull Call<User> call, @NotNull Throwable t) {
-                userMutableLiveData.postValue(null);
-                error.postValue(t.getMessage());
-            }
-        });
+                        }
+
+                        @Override
+                        public void onNext(@NotNull User user) {
+                            userMutableLiveData.postValue(user);
+                        }
+
+                        @Override
+                        public void onError(@NotNull Throwable e) {
+                            error.postValue(e.getMessage());
+                        }
+
+                        @Override
+                        public void onComplete() {
+
+                        }
+                    });
+        } else {
+            error.postValue("Нет соеденения с сервером, проверьте подключение к сети!");
+        }
     }
 
     public void SaveUserInDb(Context context, User user) {

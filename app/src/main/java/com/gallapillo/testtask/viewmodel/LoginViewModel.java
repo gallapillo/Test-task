@@ -12,33 +12,22 @@ import com.gallapillo.testtask.di.RetroInstance;
 
 import org.jetbrains.annotations.NotNull;
 
-import retrofit2.Call;
-import retrofit2.Callback;
-import retrofit2.Response;
+import io.reactivex.Observer;
+import io.reactivex.disposables.Disposable;
+import io.reactivex.schedulers.Schedulers;
 
 public class LoginViewModel extends ViewModel {
 
     private final MutableLiveData<LoginResponse> loginResponseMutableLiveData;
-    private final MutableLiveData<Integer> code;
     private final MutableLiveData<String> error;
-
-    @Override
-    protected void onCleared() {
-        super.onCleared();
-    }
 
     public LoginViewModel() {
         loginResponseMutableLiveData = new MutableLiveData<>();
-        code = new MutableLiveData<>();
         error = new MutableLiveData<>();
     }
 
     public MutableLiveData<LoginResponse> getLoginResponseObserver() {
         return loginResponseMutableLiveData;
-    }
-
-    public MutableLiveData<Integer> getCode() {
-        return code;
     }
 
     public MutableLiveData<String> getError() {
@@ -47,26 +36,38 @@ public class LoginViewModel extends ViewModel {
 
     public void loginUser(String login, String password, Context context) {
         LoginApi loginApi = RetroInstance.getRetrofitInstance().create(LoginApi.class);
-        Call<LoginResponse> call = loginApi.authLogin(login, password);
 
         if (InternetConnection.isInternetConnected(context)) {
-            call.enqueue(new Callback<LoginResponse>() {
-                @Override
-                public void onResponse(@NotNull Call<LoginResponse> call, @NotNull Response<LoginResponse> response) {
-                    if (response.isSuccessful()) {
-                        loginResponseMutableLiveData.postValue(response.body());
-                    } else {
-                        loginResponseMutableLiveData.postValue(null);
-                        code.postValue(response.code());
-                    }
-                }
+            loginApi.authLogin(login, password)
+                    .toObservable()
+                    .subscribeOn(Schedulers.io())
+                    .subscribe(new Observer<LoginResponse>() {
+                        @Override
+                        public void onSubscribe(@NotNull Disposable d) {
 
-                @Override
-                public void onFailure(@NotNull Call<LoginResponse> call, @NotNull Throwable t) {
-                    loginResponseMutableLiveData.postValue(null);
-                    error.postValue(t.getMessage());
-                }
-            });
+                        }
+
+                        @Override
+                        public void onNext(@NotNull LoginResponse loginResponse) {
+                            loginResponseMutableLiveData.postValue(loginResponse);
+                        }
+
+                        @Override
+                        public void onError(@NotNull Throwable e) {
+                            String errorMessage = e.getMessage();
+                            assert errorMessage != null;
+                            if (errorMessage.contains("401")) {
+                                error.postValue("Неправильный логин или пароль");
+                            } else {
+                                error.postValue(e.getMessage());
+                            }
+                        }
+
+                        @Override
+                        public void onComplete() {
+
+                        }
+                    });
         } else {
             error.postValue("Нет соеденения с сервером, проверьте подключение к сети!");
         }

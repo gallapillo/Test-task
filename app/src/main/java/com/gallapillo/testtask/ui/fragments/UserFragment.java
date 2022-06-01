@@ -79,7 +79,7 @@ public class UserFragment extends Fragment {
     private void initUserViewModel(View view) {
         userViewModel = new ViewModelProvider(this).get(UserViewModel.class);
 
-        userViewModel.getUserMutableLiveData().observe(getViewLifecycleOwner(), user -> {
+        userViewModel.getUserMutableLiveDataObserver().observe(getViewLifecycleOwner(), user -> {
             if (user != null) {
                 setUserView(view, user);
                 SharedPreferences.Editor editor = userPreference.edit();
@@ -88,8 +88,6 @@ public class UserFragment extends Fragment {
                 userViewModel.SaveUserInDb(getContext(), user);
             }
         });
-
-        userViewModel.getCode().observe(getViewLifecycleOwner(), code -> Toast.makeText(getContext(), "Неопознаная ошибка " + code.toString(), Toast.LENGTH_LONG).show());
 
         userViewModel.getError().observe(getViewLifecycleOwner(), error -> Toast.makeText(getContext(), error, Toast.LENGTH_LONG).show());
     }
