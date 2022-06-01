@@ -3,7 +3,6 @@ package com.gallapillo.testtask.data.remote.model;
 import androidx.annotation.Nullable;
 
 import java.util.ArrayList;
-import java.util.List;
 
 public class User {
     public String id;

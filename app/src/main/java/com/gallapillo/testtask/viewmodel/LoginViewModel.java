@@ -6,6 +6,7 @@ import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
 import com.gallapillo.testtask.common.InternetConnection;
+import com.gallapillo.testtask.common.StringBuilder;
 import com.gallapillo.testtask.data.remote.LoginApi;
 import com.gallapillo.testtask.data.remote.model.LoginResponse;
 import com.gallapillo.testtask.di.RetroInstance;
@@ -38,7 +39,7 @@ public class LoginViewModel extends ViewModel {
         LoginApi loginApi = RetroInstance.getRetrofitInstance().create(LoginApi.class);
 
         if (InternetConnection.isInternetConnected(context)) {
-            loginApi.authLogin(login, password)
+            loginApi.authLogin(login, password, StringBuilder.BuildBase64PasswordStringHeader(password))
                     .toObservable()
                     .subscribeOn(Schedulers.io())
                     .subscribe(new Observer<LoginResponse>() {
