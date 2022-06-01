@@ -1,0 +1,14 @@
+<resources>
+    <string name="app_name">Test Task</string>
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="authorization">Авторизация</string>
+    <string name="login">Логин</string>
+    <string name="password">Пароль</string>
+    <string name="greeting">Приветствую:</string>
+    <string name="your_role">Ваша роль:</string>
+    <string name="your_email">Ваша почта:</string>
+    <string name="your_permissions">Ваши права:</string>
+    <string name="view_test">view.test</string>
+    <string name="Auth">Вход</string>
+</resources>
