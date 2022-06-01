@@ -1,6 +1,5 @@
 package com.gallapillo.testtask.ui.adpaters;
 
-import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -17,7 +16,7 @@ import java.util.ArrayList;
 
 public class PermissionsAdapter extends RecyclerView.Adapter<PermissionsAdapter.ViewHolder> {
 
-    private ArrayList<String> permissions = new ArrayList<>();
+    private final ArrayList<String> permissions;
 
     public PermissionsAdapter(ArrayList<String> permissions) {
         this.permissions = permissions;
@@ -28,8 +27,7 @@ public class PermissionsAdapter extends RecyclerView.Adapter<PermissionsAdapter.
     @Override
     public ViewHolder onCreateViewHolder(@NonNull @NotNull ViewGroup parent, int viewType) {
         View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.permission_item, parent, false);
-        ViewHolder holder = new ViewHolder(view);
-        return holder;
+        return new ViewHolder(view);
     }
 
     @Override
@@ -42,8 +40,7 @@ public class PermissionsAdapter extends RecyclerView.Adapter<PermissionsAdapter.
         return permissions.size();
     }
 
-    public class ViewHolder extends RecyclerView.ViewHolder {
-
+    public static class ViewHolder extends RecyclerView.ViewHolder {
         TextView tvPermission;
 
         public ViewHolder(@NonNull @NotNull View itemView) {

@@ -7,10 +7,10 @@ import android.os.Bundle;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
-import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import android.view.LayoutInflater;
 import android.view.View;
@@ -22,6 +22,7 @@ import com.gallapillo.testtask.R;
 import com.gallapillo.testtask.common.Constants;
 import com.gallapillo.testtask.data.remote.model.User;
 import com.gallapillo.testtask.ui.adpaters.PermissionsAdapter;
+import com.gallapillo.testtask.viewmodel.LoginViewModel;
 import com.gallapillo.testtask.viewmodel.UserViewModel;
 
 import org.jetbrains.annotations.NotNull;
@@ -29,12 +30,15 @@ import org.jetbrains.annotations.NotNull;
 public class UserFragment extends Fragment {
 
     private UserViewModel userViewModel;
+    private LoginViewModel loginViewModel;
     private SharedPreferences userPreference;
+    private SharedPreferences loginPreference;
 
     @Override
     public void onCreate(@Nullable @org.jetbrains.annotations.Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        userPreference = getContext().getSharedPreferences(Constants.USER_PREFERENCE, Context.MODE_PRIVATE);
+        userPreference = requireContext().getSharedPreferences(Constants.USER_PREFERENCE, Context.MODE_PRIVATE);
+        loginPreference = requireContext().getSharedPreferences(Constants.IS_AUTH_PREFERENCE, Context.MODE_PRIVATE);
     }
 
     @Override
@@ -47,6 +51,7 @@ public class UserFragment extends Fragment {
         super.onViewCreated(view, savedInstanceState);
 
         initUserViewModel(view);
+        initLoginViewModel();
 
         if (userPreference.contains(Constants.IS_CACHED)) {
             loadUserFromDatabase();
@@ -54,6 +59,7 @@ public class UserFragment extends Fragment {
             loadUserFromLoginToken();
         }
 
+        updateUser(view);
     }
 
     private void loadUserFromDatabase() {
@@ -64,7 +70,7 @@ public class UserFragment extends Fragment {
         if (getArguments() != null) {
             UserFragmentArgs args = UserFragmentArgs.fromBundle(getArguments());
             String token = args.getToken();
-            userViewModel.getUserInfo("Bearer " + token);
+            userViewModel.getUserInfo(generateHeader(token), requireContext());
         } else {
             Toast.makeText(getContext(), "Что произошло при получении пользователя", Toast.LENGTH_SHORT).show();
         }
@@ -73,36 +79,34 @@ public class UserFragment extends Fragment {
     private void initUserViewModel(View view) {
         userViewModel = new ViewModelProvider(this).get(UserViewModel.class);
 
-        userViewModel.getUserMutableLiveData().observe(getViewLifecycleOwner(), new Observer<User>() {
-            @Override
-            public void onChanged(User user) {
-                if (user != null) {
-                    setUserView(view, user);
-                    SharedPreferences.Editor editor = userPreference.edit();
-                    editor.putBoolean(Constants.IS_CACHED, true);
-                    editor.apply();
-                    userViewModel.SaveUserInDb(getContext(), user);
-                }
+        userViewModel.getUserMutableLiveData().observe(getViewLifecycleOwner(), user -> {
+            if (user != null) {
+                setUserView(view, user);
+                SharedPreferences.Editor editor = userPreference.edit();
+                editor.putBoolean(Constants.IS_CACHED, true);
+                editor.apply();
+                userViewModel.SaveUserInDb(getContext(), user);
             }
         });
 
-        userViewModel.getCode().observe(getViewLifecycleOwner(), new Observer<Integer>() {
-            @Override
-            public void onChanged(Integer code) {
-                if (code == 401) {
-                    Toast.makeText(getContext(), "Неверный Логин или Пароль", Toast.LENGTH_LONG).show();
-                } else {
-                    Toast.makeText(getContext(), "Неопознаная ошибка " + code.toString(), Toast.LENGTH_LONG).show();
-                }
+        userViewModel.getCode().observe(getViewLifecycleOwner(), code -> Toast.makeText(getContext(), "Неопознаная ошибка " + code.toString(), Toast.LENGTH_LONG).show());
+
+        userViewModel.getError().observe(getViewLifecycleOwner(), error -> Toast.makeText(getContext(), error, Toast.LENGTH_LONG).show());
+    }
+
+    private void initLoginViewModel() {
+        loginViewModel = new ViewModelProvider(this).get(LoginViewModel.class);
+
+        loginViewModel.getLoginResponseObserver().observe(getViewLifecycleOwner(), loginResponse -> {
+            if (loginResponse != null) {
+                userViewModel.getUserInfo(generateHeader(loginResponse.accessToken), requireContext());
+                Toast.makeText(getContext(), "Обновление пользователя произшло успешно!", Toast.LENGTH_SHORT).show();
+            } else {
+                Toast.makeText(getContext(), "Что произошло при обновлении пользователя", Toast.LENGTH_SHORT).show();
             }
         });
 
-        userViewModel.getError().observe(getViewLifecycleOwner(), new Observer<String>() {
-            @Override
-            public void onChanged(String error) {
-                Toast.makeText(getContext(), error, Toast.LENGTH_LONG).show();
-            }
-        });
+        loginViewModel.getError().observe(getViewLifecycleOwner(), error -> Toast.makeText(getContext(), error, Toast.LENGTH_LONG).show());
     }
 
     private void setUserView(View view, User user) {
@@ -129,4 +133,20 @@ public class UserFragment extends Fragment {
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
     }
 
+    private void updateUser(View view) {
+        SwipeRefreshLayout swipeRefreshLayout = view.findViewById(R.id.swiperefresh);
+
+        swipeRefreshLayout.setOnRefreshListener(() -> {
+            String username = loginPreference.getString(Constants.USERNAME_KEY, "tester");
+            String password = loginPreference.getString(Constants.PASSWORD_KEY, "tester");
+
+            loginViewModel.loginUser(username, password, requireContext());
+
+            swipeRefreshLayout.setRefreshing(false);
+        });
+    }
+
+    private String generateHeader(String token) {
+        return "Bearer " + token;
+    }
 }

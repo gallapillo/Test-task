@@ -5,6 +5,8 @@ import androidx.annotation.Nullable;
 import androidx.room.Entity;
 import androidx.room.PrimaryKey;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.util.ArrayList;
 
 @Entity
@@ -19,7 +21,7 @@ public class UserEntity {
     public ArrayList<String> permissions;
 
     public UserEntity(
-            String id,
+            @NotNull String id,
             String roleId,
             String username,
             @Nullable String email,

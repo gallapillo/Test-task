@@ -7,7 +7,6 @@ import androidx.room.Query;
 
 import com.gallapillo.testtask.data.local.entities.UserEntity;
 
-import java.util.ArrayList;
 
 @Dao
 public interface UserDao {
